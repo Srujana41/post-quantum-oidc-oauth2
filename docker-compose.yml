@@ -23,6 +23,7 @@ services:
       - op_certs:/op_certs
     ports:
       - 8080:8080
+      - 9090:9090
 
   op-tcpdump:
     image: nicolaka/netshoot
@@ -56,6 +57,22 @@ services:
       - ./rp/app:/app
       - rp_certs:/rp_certs
       - op_certs:/op_certs:ro
+    ports:
+      - 9091:443
+      - 9092:80
+      - 9093:543
+      - 9094:90
+
+  rp-tcpdump:
+    image: nicolaka/netshoot
+    command: nice -20 tcpdump -B 204800 -i any "tcp" -w /data/TLS=$TLS_SIGN.pcap
+    network_mode: service:rp
+    environment:
+      TLS_SIGN: $TLS_SIGN
+    volumes:
+      - $PWD/rp/tcpdump:/data
+    depends_on:
+      - rp
 
   user_agent:
     build: user_agent
@@ -87,6 +104,13 @@ services:
       - $PWD/user_agent/tcpdump:/data
     depends_on:
       - user_agent
+
+  firefox:
+    image: jlesage/firefox
+    ports:
+      - "5800:5800"
+    volumes:
+      - "/home/srujana/docker/appdata/firefox:/config:rw"
 
 volumes:
   op_certs:

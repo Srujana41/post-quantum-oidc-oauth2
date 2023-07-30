@@ -292,4 +292,4 @@ if __name__ == "__main__":
     else:
         sslContext = None
 
-    run_simple("0.0.0.0", 8080, AppReloader(get_app), ssl_context=sslContext)
+    run_simple("0.0.0.0", 9090, AppReloader(get_app), ssl_context=sslContext)

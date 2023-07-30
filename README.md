@@ -130,3 +130,8 @@ To see what is rolling behind the scenes try this:
 ```console
 TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up --exit-code-from user_agent op rp user_agent
 ```
+
+
+```console
+TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up op rp firefox 
+```

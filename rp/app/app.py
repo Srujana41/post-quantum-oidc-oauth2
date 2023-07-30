@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
     run_simple(
         "0.0.0.0",
-        (443 if METHOD == "https" else 80),
+        (543 if METHOD == "https" else 90),
         AppReloader(get_app),
         ssl_context=sslContext,
     )
