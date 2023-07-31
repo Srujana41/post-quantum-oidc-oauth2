@@ -5,10 +5,61 @@ This repository archives the code used in the paper [Post-Quantum Electronic Ide
 We used [docker](https://www.docker.com/) to conternize our implementation of OpenID Connect's three roles: the OpenID Connect Provider ([op](op)), Relying Party ([rp](rp)), and [User Agent](user_agent).
 
 ## Install
+This branch shows the steps required to run the code locally. To run the run locally we need to setup the environment using the following:
 
-Run `git submodule init` and `git submodule update` to download the required submodules.
+1. Installing required applications (I have used Ubuntu 22.04.2LTS OS)
 
-You need to have at least `docker` and `docker-compose` to run our realistic use case. If you want to reproduce the results from our paper locally (i.e. ignoring latency), you need to have `mergecap`, `gnuplot` and `traceroute`. Finally, to reproduce our tests in real-world conditions, you will need to rent Amazon EC2 instances (other vendors should work fine) and also have `ssh` installed.
+    - Docker Desktop:
+    ```console
+        Install using the commands from documentation : https://docs.docker.com/desktop/install/ubuntu/
+    ```
+
+    - VS Code:
+    ```console
+        https://code.visualstudio.com/download
+    ```
+
+    - Wireshark:
+    ```
+        * Update APT
+            sudo apt update
+            sudo apt upgarde
+    
+        * Install wireshark
+            $ sudo apt install wireshark
+    
+        * Root privillege permissions
+            When Wireshark installs on your system, you will be prompted by the following window. As Wireshark requires superuser/root privileges to operate, this option asks to enable or disable permissions for all every user on the system. Press the “Yes” button to allow other users, or press the “No” button to restrict other users from using Wireshark.
+
+        * Launch wireshark
+            wireshark
+    ```
+
+    - Postman:
+    ```console
+        Install postman using the documentation : https://learning.postman.com/docs/getting-started/installation-and-updates/#installing-postman-on-linux
+    ```
+
+
+2. Clone the git repository
+    ```
+    git clone https://github.com/fredericoschardong/post-quantum-oidc-oauth2.git
+    ```
+3. Run `git submodule init` and `git submodule update` to download the required submodules.
+
+    You need to have at least `docker` and `docker-compose` to run our realistic use case. If you want to reproduce the results from our paper locally (i.e. ignoring latency), you need to have `mergecap`, `gnuplot` and `traceroute`. 
+   
+    ```
+    - mergecap
+        apt-get install wireshark-common
+
+    - gnuplot
+        sudo apt-get update
+        sudo apt-get install gnuplot
+
+    - traceroute
+        sudo apt install traceroute
+    ```
 
 ## Configure
 
@@ -34,12 +85,46 @@ Less relevant variables:
 ## Running
 
 ### Local
+To run the flask app locally using docker, few changes need to be made:
+1. To capture `tcpdump` files for `rp`, add the following line in `docker-compose.yml`
+    ```
+        rp-tcpdump:
+          image: nicolaka/netshoot
+          command: nice -20 tcpdump -B 204800 -i any "tcp" -w /data/TLS=$TLS_SIGN.pcap
+          network_mode: service:rp
+          environment:
+            TLS_SIGN: $TLS_SIGN
+          volumes:
+            - $PWD/rp/tcpdump:/data
+          depends_on:
+            - rp
+    ```
+2. To open the application containerised firefox browser, add the following line in `docker-compose.yml`
+    ```
+        firefox:
+          image: jlesage/firefox
+          ports:
+            - "5800:5800"
+          volumes:
+            - "/home/srujana/docker/appdata/firefox:/config:rw"
+    ```
+3. Start the app using the following command:
+    ```console
+        TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up op rp firefox 
+    ```
+4. Now to view the app in the browser, follow the following steps:
+    ```
+        - Open the "Docker Desktop" to view the containers rp, op, user_Agent and firefox running. Now click on the -------- to open firefox.
+        - Next hit the url https://rp to access the Relying Party(RP). This opens up the login page of RP after RP contacts OP for list of  OPs end points and exchanges JWK keys.
+        - Now click on login to redirect the login request to Identity Provider(IdP) from RP. Enter your IdP credentials (in this case the username and password can be anything), to get authentication code.
+        - After this you will be logged into the RP, as the process of exchanging authentication code for access_token and id_token is done in back-channel(server-server not via browser).
+        - Finally, click on logout button to logout from RP, invalidate id_token and end the session.
+    ```
 
-Run the following to repeat our use case ten times, using RSA for the JWT and no TLS:
+To open the code in debug mode using docker, follow the below steps:
 
-```console
-TLS_SIGN= JWT_SIGN=rsa REPEAT=10 docker-compose up --exit-code-from user_agent op rp user_agent
-```
+
+9. In `./run_experiments.sh` we have changed `REPEAT` to 10 because of the warning as give here [warning](#warning)
 
 It produces the raw performance numbers regarding time and size, which you can find at `user_agent/app/logs/`. 
 
@@ -49,28 +134,11 @@ We created a script to automate a large portion of the emphirical evaluation. Yo
 ./run_experiments.sh
 ```
 
-### Remote
 
-If you want to run in a realistic environment, then start two Amazon EC2 instances.
+> **Warning** <a name = "warning" id= "warning"></a>: 
+`tcpdump`s grow quickly. E.g. if you run `REPEAT=50 ./run_experiments.sh` you will get around 5GB of pcap files.
 
-There are extra variables for remote installation and execution, they are:
-
-- `AMAZON_PEM_FILE`: env variable pointing to the localtion of the .pem file downloaded from Amazon EC2 to SSH into the machines;
-- `AMAZON_USER`: as the name suggests.
-
-Then run the following to install everything is needed on your EC2 instances (adjust the IP addresses accordingly):
-
-```console
-OP_IP=54.209.156.87 RP_IP=54.87.166.113 AMAZON_PEM_FILE=~/<your pem file>.pem ./install_amazon.sh
-```
-
-Then, you can run the experiments with:
-
-```console
-OP_IP=54.209.156.87 RP_IP=54.87.166.113 AMAZON_PEM_FILE=~/teste.pem REPEAT=50 ./run_experiments.sh
-```
-
-**Warning**: `tcpdump`s grow quickly. E.g. if you run `REPEAT=50 ./run_experiments.sh` you will get around 5GB of pcap files.
+how to debug container steps
 
 ## Tips
 
@@ -129,9 +197,4 @@ user_agent_1          | Stdev resp size: 5.125929
 To see what is rolling behind the scenes try this:
 ```console
 TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up --exit-code-from user_agent op rp user_agent
-```
-
-
-```console
-TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up op rp firefox 
 ```
