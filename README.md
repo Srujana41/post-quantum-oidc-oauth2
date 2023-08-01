@@ -99,7 +99,11 @@ To run the flask app locally using docker, few changes need to be made:
           depends_on:
             - rp
     ```
-2. To open the application containerised firefox browser, add the following line in `docker-compose.yml`
+    Now to start the application along with getting tcpdump files, use the following command:
+    ```
+        TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up --exit-code-from user_agent op rp user_agent op-tcpdump rp-tcpdump user_agent-tcpdump
+    ```
+2. To open the application in containerised firefox browser, add the following line in `docker-compose.yml`
     ```
         firefox:
           image: jlesage/firefox
@@ -108,13 +112,14 @@ To run the flask app locally using docker, few changes need to be made:
           volumes:
             - "/home/srujana/docker/appdata/firefox:/config:rw"
     ```
+    We are using firefox for convenience as running the app in local browser requires you to change op and rp to localhost with 8080 and 443 ports.
 3. Start the app using the following command:
     ```console
         TLS_SIGN=ecdsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose up op rp firefox 
     ```
 4. Now to view the app in the browser, follow the following steps:
     ```
-        - Open the "Docker Desktop" to view the containers rp, op, user_Agent and firefox running. Now click on the -------- to open firefox.
+        - Open the "Docker Desktop" to view the containers rp, op, user_Agent and firefox running. Now click on its ports (5800:5800) to open firefox.
         - Next hit the url https://rp to access the Relying Party(RP). This opens up the login page of RP after RP contacts OP for list of  OPs end points and exchanges JWK keys.
         - Now click on login to redirect the login request to Identity Provider(IdP) from RP. Enter your IdP credentials (in this case the username and password can be anything), to get authentication code.
         - After this you will be logged into the RP, as the process of exchanging authentication code for access_token and id_token is done in back-channel(server-server not via browser).
@@ -122,6 +127,7 @@ To run the flask app locally using docker, few changes need to be made:
     ```
 
 To open the code in debug mode using docker, follow the below steps:
+
 
 
 9. In `./run_experiments.sh` we have changed `REPEAT` to 10 because of the warning as give here [warning](#warning)
