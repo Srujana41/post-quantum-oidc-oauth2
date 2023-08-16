@@ -66,7 +66,7 @@ def set_global_constants(tls_sign, jwt_sign):
     KEY_TYPE = "CryptographyRSA" if KEY_TYPE == "rsa" else KEY_TYPE
 
     METHOD = "https" if TLS_SIGN else "http"
-    OIDC_SERVER_URL = f"{METHOD}://{OP_IP}:8080/"
+    OIDC_SERVER_URL = f"{METHOD}://{OP_IP}/"
     SERVER_ADDRESS = f"{METHOD}://{RP_IP}:%d" % (443 if METHOD == "https" else 80)
 
 
@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
     run_simple(
         "0.0.0.0",
-        (543 if METHOD == "https" else 90),
+        (443 if METHOD == "https" else 80),
         AppReloader(get_app),
         ssl_context=sslContext,
     )

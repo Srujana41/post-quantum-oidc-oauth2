@@ -1,4 +1,3 @@
-import ssl
 import os
 import logging
 import statistics
@@ -13,6 +12,37 @@ urllib3.disable_warnings(urllib3.exceptions.SecurityWarning)
 
 from bs4 import BeautifulSoup
 from time import sleep, perf_counter
+
+import socket, ssl
+def measure_tls_handshake_time(total_tls_handshake_time, url, ip, cert_file, allow_redirects = True, data = None):
+    current_time = perf_counter()
+
+    # Load the custom intermediate certificate
+    ssl_context = ssl.create_default_context(cafile=cert_file)
+
+    # Open a socket connection and measure the TLS handshake time
+    with socket.create_connection((ip, 443)) as sock:
+        with ssl_context.wrap_socket(sock, server_hostname=ip) as ssock:
+            tls_handshake_time = perf_counter() - current_time
+            total_tls_handshake_time = total_tls_handshake_time + tls_handshake_time
+            print(f"TLS Handshake Time for url: {ip} is {tls_handshake_time:.8f} seconds")
+            
+    if data:
+            response = requests.post(
+                url,
+                verify=cert_file,
+                timeout=TIMEOUT,
+                allow_redirects=allow_redirects,
+                data=data
+            )
+    else:
+        response = requests.get(
+                    url,
+                    verify=cert_file,
+                    timeout=TIMEOUT,
+                    allow_redirects=allow_redirects
+                )
+    return total_tls_handshake_time, response
 
 TLS_SIGN = os.getenv("TLS_SIGN").lower()
 method = "https" if TLS_SIGN else "http"
@@ -68,12 +98,14 @@ def run_single_test():
 
     if TEST == "all":
         try:
+            total_tls_handshake_time = float(0)
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, f"{method}://{RP_IP}/", f"{RP_IP}", f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt")
             # home
-            response = requests.get(
-                f"{method}://{RP_IP}/",
-                verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
-                timeout=TIMEOUT,
-            )
+            # response = requests.get(
+            #     f"{method}://{RP_IP}/",
+            #     verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
+            #     timeout=TIMEOUT,
+            # )
             ua_responses_size = len(response.content)
             ua_responses_size += get_css_js(
                 response.content,
@@ -82,17 +114,23 @@ def run_single_test():
             )
 
             # authenticate
-            response = requests.get(
-                f"{method}://{RP_IP}/auth",
-                verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
-                allow_redirects=False,
-                timeout=TIMEOUT,
-            )
-            response = requests.get(
-                response.headers["Location"],
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
-                timeout=TIMEOUT,
-            )
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, f"{method}://{RP_IP}/auth", f"{RP_IP}", f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt", False)
+
+            # response = requests.get(
+            #     f"{method}://{RP_IP}/auth",
+            #     verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
+            #     allow_redirects=False,
+            #     timeout=TIMEOUT,
+            # )
+            
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, response.headers["Location"], f"{OP_IP}", f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt")
+
+            # response = requests.get(
+            #     response.headers["Location"],
+            #     verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+            #     timeout=TIMEOUT,
+            # )
+            
             ua_responses_size += len(response.content)
             ua_responses_size += get_css_js(
                 response.content,
@@ -102,17 +140,23 @@ def run_single_test():
 
             data = {"username": "anything", "password": "anything"}
 
-            response = requests.post(
-                response.url,
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
-                allow_redirects=False,
-                data=data,
-            )
-            response = requests.get(
-                response.headers["Location"],
-                verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
-                timeout=TIMEOUT,
-            )
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, response.url, f"{OP_IP}", f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt", False, data)
+
+            # response = requests.post(
+            #     response.url,
+            #     verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+            #     allow_redirects=False,
+            #     data=data,
+            # )
+            
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, response.headers["Location"], f"{RP_IP}", f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt")
+            
+            # response = requests.get(
+            #     response.headers["Location"],
+            #     verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
+            #     timeout=TIMEOUT,
+            # )
+            
             ua_responses_size += get_css_js(
                 response.content,
                 response.url,
@@ -131,27 +175,36 @@ def run_single_test():
                 "post_logout_redirect_uri": post_logout_redirect_uri,
             }
 
-            response = requests.post(
-                f"{method}://{RP_IP}/auth/logout",
-                verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
-                data=data,
-                allow_redirects=False,
-                timeout=TIMEOUT,
-            )
-            response = requests.post(
-                response.headers["Location"],
-                data=data,
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
-                allow_redirects=False,
-                timeout=TIMEOUT,
-            )
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, f"{method}://{RP_IP}/auth/logout", f"{RP_IP}", f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt", False, data)
 
-            response = requests.get(
-                response.headers["Location"],
-                verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
-                allow_redirects=False,
-                timeout=TIMEOUT,
-            )
+            # response = requests.post(
+            #     f"{method}://{RP_IP}/auth/logout",
+            #     verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
+            #     data=data,
+            #     allow_redirects=False,
+            #     timeout=TIMEOUT,
+            # )
+            
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, response.headers["Location"], f"{OP_IP}", f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt", False, data)
+            
+            # response = requests.post(
+            #     response.headers["Location"],
+            #     data=data,
+            #     verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+            #     allow_redirects=False,
+            #     timeout=TIMEOUT,
+            # )
+            
+            total_tls_handshake_time, response = measure_tls_handshake_time(total_tls_handshake_time, response.headers["Location"], f"{RP_IP}", f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt", False)
+            
+
+            # response = requests.get(
+            #     response.headers["Location"],
+            #     verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_{TLS_SIGN}.crt",
+            #     allow_redirects=False,
+            #     timeout=TIMEOUT,
+            # )
+            
             ua_responses_size += len(response.content)
             ua_responses_size += get_css_js(
                 response.content,
@@ -170,17 +223,18 @@ def run_single_test():
             )
 
             op_responses_size = requests.get(
-                f"{method}://{OP_IP}:8080/get_requests_length",
+                f"{method}://{OP_IP}/get_requests_length",
                 verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
                 timeout=TIMEOUT,
             ).json()
 
             return dict(
-                {
+                {   
                     "Tempo total": toc - tic,
                     "Req/sec": 21 / (toc - tic),
                     "Tamanho total": ua_responses_size
                     + sum(op_responses_size.values()),
+                    "Total tls handshake time": total_tls_handshake_time
                 },
                 **op_responses_size,
             )
@@ -251,6 +305,7 @@ with open(detailed_log_file, "w") as myfile:
         timings.append(results[-1]["Tempo total"])
         req_sec.append(results[-1]["Req/sec"])
         resp_size.append(results[-1]["Tamanho total"])
+        resp_size.append(results[-1]["Total tls handshake time"])
 
         logger.info(f"Finished test {i} of {REPEAT}")
 

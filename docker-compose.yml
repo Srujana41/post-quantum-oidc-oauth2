@@ -112,6 +112,16 @@ services:
     volumes:
       - "/home/srujana/docker/appdata/firefox:/config:rw"
 
+  firefox-tcpdump:
+    image: nicolaka/netshoot
+    command: nice -20 tcpdump -B 204800 -i any "tcp" -w /data/TLS=$TLS_SIGN.pcap
+    network_mode: service:firefox
+    environment:
+      TLS_SIGN: $TLS_SIGN
+    volumes:
+      - $PWD/user_agent/tcpdump:/data
+    depends_on:
+      - firefox
 volumes:
   op_certs:
   rp_certs:
