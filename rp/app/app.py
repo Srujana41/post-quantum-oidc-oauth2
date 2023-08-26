@@ -3,7 +3,7 @@ import os
 import ssl
 import sys
 import logging
-import requests
+import requests, time
 
 from urllib.parse import urlencode
 
@@ -100,6 +100,18 @@ def get_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SESSION_SECRET_KEY
     app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+    
+    class LatencyMiddleware:
+        def __init__(self, app, latency_ms=0):
+            self.app = app
+            self.latency_ms = latency_ms
+
+        def __call__(self, environ, start_response):
+            if self.latency_ms > 0:
+                time.sleep(self.latency_ms / 1000)
+            return self.app(environ, start_response)
+
+    app.wsgi_app = LatencyMiddleware(app.wsgi_app, latency_ms=320)  # Set latency in milliseconds
 
     session = dict()
 
