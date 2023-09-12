@@ -51,7 +51,7 @@ This branch shows the steps required to run the code locally. To run the run loc
    
     ```
     - mergecap
-        apt-get install wireshark-common
+        sudo apt-get install wireshark-common
 
     - gnuplot
         sudo apt-get update
