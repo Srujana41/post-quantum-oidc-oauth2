@@ -5,7 +5,7 @@ import sys
 import json
 import logging
 import secrets
-import time
+import csv, base64
 
 from oic.utils.time_util import utc_time_sans_frac
 from oic.utils.keyio import build_keyjar
@@ -127,18 +127,6 @@ REQUEST_LENGTH = {}
 def get_app():
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
-        
-    class LatencyMiddleware:
-        def __init__(self, app, latency_ms=0):
-            self.app = app
-            self.latency_ms = latency_ms
-
-        def __call__(self, environ, start_response):
-            if self.latency_ms > 0:
-                time.sleep(self.latency_ms / 1000)
-            return self.app(environ, start_response)
-
-    app.wsgi_app = LatencyMiddleware(app.wsgi_app, latency_ms=320)
 
     @app.before_request
     def gather_request_data():
@@ -173,7 +161,7 @@ def get_app():
         code = "a34b69e9-39af-4301-bf75-de6badb92823.a6480a0f-bb38-4c7a-9908-20f8608e1e48.39fecc"
 
         return redirect(
-            f"{METHOD}://{RP_IP}:443/auth/callback?state={state}&session_state={session_state}&code={code}",
+            f"{METHOD}://{RP_IP}/auth/callback?state={state}&session_state={session_state}&code={code}",
             code=307,
         )
 
