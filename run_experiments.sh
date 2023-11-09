@@ -65,8 +65,8 @@ if [ "$OP_IP" != "op" ]; then
 fi
 
 if [ -z "${REPEAT}" ]; then
-    echo "\$REPEAT was not set... assuming 1000"
-    REPEAT="1000"
+    echo "\$REPEAT was not set... assuming 10"
+    REPEAT="10"
 fi
 
 if [ -z "${TEST}" ]; then
@@ -196,13 +196,15 @@ if [ "$OP_IP" != "op" ]; then
     ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "rm -Rf op/tcpdump/*.pcap op/app/tls_debug/*.tls_debug"
 fi
 
-rm -Rf op/tcpdump/*.pcap user_agent/tcpdump/*.pcap op/app/tls_debug/*.tls_debug user_agent/app/tls_debug/*.tls_debug
+rm -Rf op/tcpdump/*.pcap rp/tcpdump/*.pcap user_agent/tcpdump/*.pcap op/app/tls_debug/*.tls_debug rp/app/tls_debug/*.tls_debug user_agent/app/tls_debug/*.tls_debug
 
 if [ "$SAVE_TLS_DEBUG" = "True" ]; then
     op_services="op op-tcpdump"
+    rp_services="rp rp-tcpdump"
     local_services="user_agent user_agent-tcpdump"
 else
     op_services="op"
+    rp_services="rp"
     local_services="user_agent"
 fi
 
@@ -225,7 +227,7 @@ for tls_index in "${!TLS[@]}"; do
         SECONDS=0
         
         if [ "$OP_IP" = "op" ]; then
-            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker-compose up --force-recreate --exit-code-from user_agent $local_services op rp op-tcpdump >> $RESULTS_FOLDER/log_user_agent 2>&1
+            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker-compose up --force-recreate --exit-code-from user_agent $local_services op rp op-tcpdump rp-tcpdump >> $RESULTS_FOLDER/log_user_agent 2>&1
         else
             TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker-compose -f docker-compose-amazon.yml up --force-recreate --exit-code-from user_agent $local_services >> $RESULTS_FOLDER/log_user_agent 2>&1
         fi
