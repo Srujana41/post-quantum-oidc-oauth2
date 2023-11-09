@@ -30,37 +30,37 @@ scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/
 scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$RP_IP:~/
 (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$RP_IP:~/' exited with non-zero"; exit 1; }
 
-rm code.tar.gz
+# rm code.tar.gz
 
-# on both OP and RP install docker and docker-compose
-declare -a IPs=("$RP_IP" "$OP_IP")
+# # on both OP and RP install docker and docker-compose
+# declare -a IPs=("$RP_IP" "$OP_IP")
 
-for index in "${!IPs[@]}"; do
-IP=${IPs[$index]}
+# for index in "${!IPs[@]}"; do
+# IP=${IPs[$index]}
 
-echo ""
-echo ""
-echo "installing docker on $IP"
-echo ""
-echo ""
+# echo ""
+# echo ""
+# echo "installing docker on $IP"
+# echo ""
+# echo ""
 
-ssh $AMAZON_USER@$IP -i $AMAZON_PEM_FILE << EOF
-    rm -Rf op* rp* user_agent results
-    command -v docker && echo "Docker already installed" && exit
-    sudo apt-get update
-    sudo apt-get remove docker docker-engine docker.io containerd runc
-    sudo apt-get install -y ca-certificates curl gnupg lsb-release
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-    sudo groupadd docker
-    sudo usermod -aG docker $AMAZON_USER
-    newgrp docker 
-EOF
-done
+# ssh $AMAZON_USER@$IP -i $AMAZON_PEM_FILE << EOF
+#     rm -Rf op* rp* user_agent results
+#     command -v docker && echo "Docker already installed" && exit
+#     sudo apt-get update
+#     sudo apt-get remove docker docker-engine docker.io containerd runc
+#     sudo apt-get install -y ca-certificates curl gnupg lsb-release
+#     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+#     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+#     sudo apt-get update
+#     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+#     sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#     sudo chmod +x /usr/local/bin/docker-compose
+#     sudo groupadd docker
+#     sudo usermod -aG docker $AMAZON_USER
+#     newgrp docker 
+# EOF
+# done
 
 # on OP
 ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE << EOF

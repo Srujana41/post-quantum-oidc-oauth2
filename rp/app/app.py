@@ -67,7 +67,7 @@ def set_global_constants(tls_sign, jwt_sign):
 
     METHOD = "https" if TLS_SIGN else "http"
     OIDC_SERVER_URL = f"{METHOD}://{OP_IP}/"
-    SERVER_ADDRESS = f"{METHOD}://{RP_IP}:%d" % (443 if METHOD == "https" else 80)
+    SERVER_ADDRESS = f"{METHOD}://{RP_IP}/"
 
 
 set_global_constants(TLS_SIGN, JWT_SIGN)
@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     run_simple(
         "0.0.0.0",
-        (443 if METHOD == "https" else 80),
+        443,
         AppReloader(get_app),
         ssl_context=sslContext,
     )

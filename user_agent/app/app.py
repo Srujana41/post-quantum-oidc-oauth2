@@ -269,7 +269,7 @@ def run_single_test():
                     timeout=TIMEOUT,
                 )
                 requests.get(
-                    f"{method}://{OP_IP}:8080/get_requests_length",
+                    f"{method}://{OP_IP}/get_requests_length",
                     verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
                     timeout=TIMEOUT,
                 )
@@ -281,7 +281,7 @@ def run_single_test():
     elif TEST == "token":
         try:
             response = requests.post(
-                f"{method}://{OP_IP}:8080/protocol/openid-connect/token",
+                f"{method}://{OP_IP}/protocol/openid-connect/token",
                 verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
                 timeout=TIMEOUT,
             )
