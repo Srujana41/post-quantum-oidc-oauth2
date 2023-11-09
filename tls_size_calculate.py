@@ -29,9 +29,9 @@ class Packet:
 
     def __init__(self, packet):
         self._packet = packet
-        self._tcp = packet["_source"]["layers"]["tcp"]
-        self._tls = packet["_source"]["layers"].get("tls")
-        self._frame = packet["_source"]["layers"]["frame"]
+        self._tcp = packet["_source"]["layers"]["tcp"]       #for getting port
+        self._tls = packet["_source"]["layers"].get("tls")    #for getting handshakes info
+        self._frame = packet["_source"]["layers"]["frame"]    #for getting timestamps info
 
     @property
     def srcport(self):
@@ -91,11 +91,11 @@ class Packet:
         return int(self._tcp['tcp.len'])
 
 def length(record):
-    return 5 + int(record['tls.record.length'])
+    return 5 + int(record['tls.record.length'])  # here 5 is header size
 
 def calculate_tls_size_for_file(filepath, algorithm):
     command = "tshark -r {} -R tls -2 -Tjson --no-duplicate-keys > {}.json".format(filepath, pcap_directory+algorithm)
-    return_code = subprocess.call(command, shell=True)
+    return_code = subprocess.call(command, shell=True)  #executes the command
     with open(pcap_directory+algorithm + '.json') as f:
         data = json.load(f)
 
@@ -181,7 +181,7 @@ def calculate_tls_size_for_file(filepath, algorithm):
         return client_hello_size, server_hello_size, change_cipher_spec_size, encrypted_extensions_size, certificate_size, certificate_verify_size, server_finished_size, change_cipher_spec_client_finished_size, client_finished_size, total_size, total_handshake, tls_time
 
 
-pcap_directory = 'results/172.27.96.243-172.27.96.250/all-1-2023-10-06-06-01-27/'
+pcap_directory = 'results/172.27.96.243-172.27.96.250/all-1-2023-10-21-16-14-06/'
 
 tcp_dump_directory = pcap_directory + "tcpdump"
 ssl_keylog_directory = "tls_debug"
