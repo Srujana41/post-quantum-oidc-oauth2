@@ -6,7 +6,7 @@
 prefix="rp"
 op_prefix="op"
 serverIP="${RP_IP:-rp}"
-serverIPOP="172.27.96.243"
+serverIPOP="${OP_IP:-op}"
 subjectAltNameType="${SUBJECT_ALT_NAME_TYPE:-DNS}"
 WORKING_DIR="${prefix}_certs"
 OP_CERTS="op_certs"
@@ -23,8 +23,8 @@ clientconf="cert-confs/openssl_client_auth.cnf"
 rootCADir="$WORKING_DIR/RootCA/"
 intermediaryCAsDir="$WORKING_DIR/IntermediaryCAs/"
 serverCerts="$WORKING_DIR/ServerCerts/"
-opServerCerts="$OP_CERTS/ServerCerts"
-opServerCertsOIDC="$OP_CERTS/ServerCertsOIDC"
+opServerCerts="$OP_CERTS/ServerCerts/"
+opServerCertsOIDC="$OP_CERTS/ServerCertsOIDC/"
 JWTKeys="$WORKING_DIR/JWTKeys/"
 
 #Certificate Algos
@@ -86,7 +86,7 @@ for algo in "${arrayalgos[@]}"; do
     $OQS_OPENSSL_DIR/openssl req -new -key "$intermediaryCAsDir/${prefix}_$algo.key" -out "$intermediaryCAsDir/${prefix}_$algo.csr" -nodes -subj "/CN=LABSEC oqstest IntCA" -config $intermediateconf -addext basicConstraints=critical,CA:true,pathlen:0 -addext keyUsage=critical,digitalSignature,cRLSign,keyCertSign
 
     #Sign it by the corresponding root CA, generating the certificate
-    $OQS_OPENSSL_DIR/openssl x509 -req -in "$intermediaryCAsDir/${prefix}_$algo.csr" -out "$intermediaryCAzsDizr/${prefix}_$algo.crt" -CA "$rootCADir/${prefix}_$algo.crt" -CAkey "$rootCADir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions v3_ca -extfile "$intermediateExt"
+    $OQS_OPENSSL_DIR/openssl x509 -req -in "$intermediaryCAsDir/${prefix}_$algo.csr" -out "$intermediaryCAsDir/${prefix}_$algo.crt" -CA "$rootCADir/${prefix}_$algo.crt" -CAkey "$rootCADir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions v3_ca -extfile "$intermediateExt"
 
     #Create bundle
     cat "$intermediaryCAsDir/${prefix}_$algo.crt" "$rootCADir/${prefix}_$algo.crt" > "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt"
@@ -122,36 +122,25 @@ for algo in "${arrayalgos[@]}"; do
 
     #Generating certificates from csr
     $OQS_OPENSSL_DIR/openssl x509 -req -in "$serverCerts/${prefix}_${algo}_$serverIP.csr" -out "$serverCerts/${prefix}_${algo}_$serverIP.crt" -CA "$intermediaryCAsDir/${prefix}_$algo.crt" -CAkey "$intermediaryCAsDir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExt"
-    
+
     $OQS_OPENSSL_DIR/openssl x509 -in "$serverCerts/${prefix}_${algo}_$serverIP.crt" -text
+
+    echo "Generating certificated from op csr using rp "
+
+    if [ ! -d "$opServerCerts" ]; then
+        echo "$opServerCerts does not exist."
+    fi
+
+    if [-d "$opServerCerts" ]; then
+        echo "$opServerCerts does exist."
+    fi
+
+    #Generating certificated from op csr using rp 
+    $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCerts/${prefix}_${algo}_$serverIP.crt" -CAkey "$serverCerts/${prefix}_${algo}_$serverIP.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExt"
     
     #Create bundle
     cat "$serverCerts/${prefix}_${algo}_$serverIP.crt" "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt" > "$serverCerts/bundlecerts_chain_${prefix}_${algo}_$serverIP.crt"
 
-    # # Generate oidc key and csr
-
-    # echo "Generating certificated from op csr using rp "
-
-    # #Generating certificated from op csr using rp 
-    # $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCerts/${prefix}_${algo}_$serverIP.crt" -CAkey "$serverCerts/${prefix}_${algo}_$serverIP.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExt"
-    
-    # $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -text
-
-    # #Create bundle for op csr using rp
-    # cat "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$serverCerts/${prefix}_${algo}_$serverIP.crt" > "$opServerCertsOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
-
-
-    # Generate oidc key and csr
-
-    echo "Generating certificated from op csr using rp intermediate "
-
-    #Generating certificated from op csr using rp 
-    $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$intermediaryCAsDir/${prefix}_$algo.crt" -CAkey "$intermediaryCAsDir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExt"
-    
-    $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -text
-
-    #Create bundle for op csr using rp
-    cat "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt"
-     > "$opServerCertsOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
+    cat "$serverCerts/${prefix}_${algo}_$serverIP.crt" "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt" > "$opServerCerts/bundlecerts_chain_${prefix}_${algo}_$serverIP.crt"
 
 done

@@ -282,14 +282,27 @@ if __name__ == "__main__":
         sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
 
-        sslContext.load_cert_chain(
-            certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
-            keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
-        )
+        # sslContext.load_cert_chain(
+        #     certfile=f"/op_certs/ServerCertsOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+        #     keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
+        # )
+
+        # sslContext.load_cert_chain(
+        #     certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+        #     keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
+        # )
+
+        def get_ssl_context():
+            if request.headers.get('X-Client') == 'RP':
+                return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt", 
+                                                                                           keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
+            else:
+                return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCertsOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+                                                                                           keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
 
         if SAVE_TLS_DEBUG:
             sslContext.keylog_filename = keylog_filename
     else:
         sslContext = None
-
-    run_simple("0.0.0.0", 8080, AppReloader(get_app), ssl_context=sslContext)
+    
+    run_simple("0.0.0.0", 8080, AppReloader(get_app), ssl_context='adhoc')
