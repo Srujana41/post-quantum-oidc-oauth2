@@ -88,9 +88,11 @@ scp -r -i $AMAZON_PEM_FILE op_certs.tar.gz $AMAZON_USER@$RP_IP:~/op_certs.tar.gz
 
 tar -xvzf op_certs.tar.gz 
 
+echo "op done"
+
 #on OP
 ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE << EOF
-    m
+    OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=rsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up -d op
 EOF
 
 # on RP
@@ -133,19 +135,21 @@ ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE << EOF
     tar -xvzf op_certs.tar.gz
 EOF
 
-docker stop $(docker ps -a -q)
-docker container rm $(docker container ls -a -q) && docker volume rm post_quantum_op_certs post_quantum_rp_certs
-docker rmi $(docker images -a --filter=dangling=true -q)
-docker-compose -f docker-compose-amazon.yml build user_agent user_agent-tcpdump
-docker system prune -a --volumes -f
+echo "complete setup done"
 
-echo "Testing if everything is working...."
-OP_IP=$OP_IP RP_IP=$RP_IP LOG_LEVEL=DEBUG TLS_SIGN=rsa JWT_SIGN=rsa REPEAT=1 docker-compose -f docker-compose-amazon.yml up --exit-code-from user_agent user_agent user_agent-tcpdump
+# docker stop $(docker ps -a -q)
+# docker container rm $(docker container ls -a -q) && docker volume rm post_quantum_op_certs post_quantum_rp_certs
+# docker rmi $(docker images -a --filter=dangling=true -q)
+# docker-compose -f docker-compose-amazon.yml build user_agent user_agent-tcpdump
+# docker system prune -a --volumes -f
 
-if [ $? -eq 0 ]; then
-    echo -e "\n\n\n"
-    echo "Apparently everything is working! You can now run the realistic tests with:"
-    echo "OP_IP=$OP_IP RP_IP=$RP_IP AMAZON_USER=$AMAZON_USER AMAZON_PEM_FILE=$AMAZON_PEM_FILE LOG_LEVEL=DEBUG ./run_experiments.sh &"
-else
-    echo "Something went wrong!"
-fi
+# echo "Testing if everything is working...."
+# OP_IP=$OP_IP RP_IP=$RP_IP LOG_LEVEL=DEBUG TLS_SIGN=rsa JWT_SIGN=rsa REPEAT=1 docker-compose -f docker-compose-amazon.yml up --exit-code-from user_agent user_agent user_agent-tcpdump
+
+# if [ $? -eq 0 ]; then
+#     echo -e "\n\n\n"
+#     echo "Apparently everything is working! You can now run the realistic tests with:"
+#     echo "OP_IP=$OP_IP RP_IP=$RP_IP AMAZON_USER=$AMAZON_USER AMAZON_PEM_FILE=$AMAZON_PEM_FILE LOG_LEVEL=DEBUG ./run_experiments.sh &"
+# else
+#     echo "Something went wrong!"
+# fi
