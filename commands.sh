@@ -12,3 +12,14 @@ sudo chmod +x /usr/local/bin/docker-compose
 sudo groupadd docker
 sudo usermod -aG docker ubuntu
 newgrp docker 
+
+
+
+# test ssl 
+
+# on user agent
+requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f"/home/ubuntu/post-quantum-oidc-oauth2/rp_certs/ServerCerts/bundlecerts_chain_rp_ecdsa_172.27.96.182.crt")
+
+
+# on rp
+requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f"/home/ubuntu/op_certs/IntermediaryCAs/bundlecerts_chain_op_ecdsa.crt")
