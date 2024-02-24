@@ -97,7 +97,8 @@ EOF
 
 # on RP
 ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE << EOF
-    tar -xvzf code.tar.gz 
+    rm -Rf op rp op_certs rp_certs user_agent results
+    tar -xvzf code.tar.gz
     tar -xvzf op_certs.tar.gz --directory /home/ubuntu/rp
     docker system prune -a --volumes -f
     SUBJECT_ALT_NAME_TYPE=IP RP_IP=$RP_IP docker-compose -f docker-compose-amazon.yml build rp
