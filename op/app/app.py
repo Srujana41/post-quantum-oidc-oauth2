@@ -62,7 +62,7 @@ def set_global_constants(tls_sign, jwt_sign):
         os.environ["TLS_DEFAULT_GROUPS"] = "kyber512"
 
     METHOD = "https" if TLS_SIGN else "http"
-    SERVER_ADDRESS = f"{METHOD}://{OP_IP}:8080/"
+    SERVER_ADDRESS = f"{METHOD}://{OP_IP}/"
 
     KEY_TYPE = "PQC" if JWT_SIGN not in ["rsa", "ecdsa"] else JWT_SIGN.upper()
 
@@ -279,8 +279,8 @@ if __name__ == "__main__":
         if os.path.exists(keylog_filename):
             os.remove(keylog_filename)
 
-        sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
+        # sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        # sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
 
         # sslContext.load_cert_chain(
         #     certfile=f"/op_certs/ServerCertsOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
@@ -292,16 +292,18 @@ if __name__ == "__main__":
         #     keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
         # )
 
-        def get_ssl_context():
-            if request.headers.get('X-Client') == 'RP':
-                return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt", 
-                                                                                           keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
-            else:
-                return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCertsOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
-                                                                                           keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
+        # def get_ssl_context():
+        #     if request.headers.get('X-Client') == 'RP':
+        #         return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt", 
+        #                                                                                    keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
+        #     else:
+        #         return sslContext.load_cert_chain(certfile=f"/op_certs/ServerCertsOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+        #                                                                                    keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key")
 
-        if SAVE_TLS_DEBUG:
-            sslContext.keylog_filename = keylog_filename
+        sslContext = None
+        # if SAVE_TLS_DEBUG:
+        #     sslContext.keylog_filename = keylog_filename
+        
     else:
         sslContext = None
     

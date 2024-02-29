@@ -107,9 +107,12 @@ resumed_results="user_agent/app/logs/resumed_TEST=$TEST.csv"
 declare -A mean_results
 declare -A stdev_results
 
-declare -a TLS=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
-declare -a JWT=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
-declare -a TLS_PRETTY_NAMEs=("RSA" "ECDSA" "Dilithium 2" "Dilithium 3" "Dilithium 5" "Falcon-512" "Falcon-1024" "SPHINCS+-SHAKE256-128f-simple" "SPHINCS+-SHAKE256-192f-simple" "SPHINCS+-SHAKE256-256f-simple")
+declare -a TLS=("ecdsa")
+declare -a JWT=("ecdsa")
+declare -a TLS_PRETTY_NAMEs=("ecdsa")
+# declare -a TLS=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
+# declare -a JWT=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
+# declare -a TLS_PRETTY_NAMEs=("RSA" "ECDSA" "Dilithium 2" "Dilithium 3" "Dilithium 5" "Falcon-512" "Falcon-1024" "SPHINCS+-SHAKE256-128f-simple" "SPHINCS+-SHAKE256-192f-simple" "SPHINCS+-SHAKE256-256f-simple")
 
 if [ "$SCOPE" = "all" ]; then
     echo "Generating all possible combinations between TLS and JWT signing algorithms for TEST=$TEST with $REPEAT repetitions using OP_IP=$OP_IP and RP_IP=$RP_IP"
@@ -199,10 +202,10 @@ fi
 rm -Rf op/tcpdump/*.pcap user_agent/tcpdump/*.pcap op/app/tls_debug/*.tls_debug user_agent/app/tls_debug/*.tls_debug
 
 if [ "$SAVE_TLS_DEBUG" = "True" ]; then
-    op_services="op op-tcpdump"
+    op_services="op op-tcpdump nginx"
     local_services="user_agent user_agent-tcpdump"
 else
-    op_services="op"
+    op_services="op nginx"
     local_services="user_agent"
 fi
 

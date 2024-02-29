@@ -90,21 +90,21 @@ def run_single_test():
             )
             response = requests.get(
                 response.headers["Location"],
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                 timeout=TIMEOUT,
             )
             ua_responses_size += len(response.content)
             ua_responses_size += get_css_js(
                 response.content,
                 response.url,
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
             )
 
             data = {"username": "anything", "password": "anything"}
 
             response = requests.post(
                 response.url,
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                 allow_redirects=False,
                 data=data,
             )
@@ -141,7 +141,7 @@ def run_single_test():
             response = requests.post(
                 response.headers["Location"],
                 data=data,
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                 allow_redirects=False,
                 timeout=TIMEOUT,
             )
@@ -170,8 +170,8 @@ def run_single_test():
             )
 
             op_responses_size = requests.get(
-                f"{method}://{OP_IP}:8080/get_requests_length",
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                f"{method}://{OP_IP}/get_requests_length",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                 timeout=TIMEOUT,
             ).json()
 
@@ -195,8 +195,8 @@ def run_single_test():
                     timeout=TIMEOUT,
                 )
                 requests.get(
-                    f"{method}://{OP_IP}:8080/get_requests_length",
-                    verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                    f"{method}://{OP_IP}/get_requests_length",
+                    verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                     timeout=TIMEOUT,
                 )
             except Exception as e:
@@ -207,8 +207,8 @@ def run_single_test():
     elif TEST == "token":
         try:
             response = requests.post(
-                f"{method}://{OP_IP}:8080/protocol/openid-connect/token",
-                verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_{TLS_SIGN}.crt",
+                f"{method}://{OP_IP}/protocol/openid-connect/token",
+                verify=f"/rp_certs/ServerCerts/root_rp_{TLS_SIGN}.crt",
                 timeout=TIMEOUT,
             )
             ua_responses_size = len(response.content)

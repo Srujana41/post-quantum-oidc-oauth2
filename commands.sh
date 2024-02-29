@@ -14,6 +14,9 @@ sudo usermod -aG docker ubuntu
 newgrp docker 
 
 
+# run single server on op or rp with logs
+OP_IP=172.27.96.243 RP_IP=172.27.96.120 TLS_SIGN=ecdsa JWT_SIGN=ecdsa LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate op nginx >> log.txt
+
 
 # test ssl 
 
@@ -23,3 +26,8 @@ requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f
 
 # on rp
 requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f"/home/ubuntu/op_certs/IntermediaryCAs/bundlecerts_chain_op_ecdsa.crt")
+
+
+
+
+OP_IP=172.27.96.243 RP_IP=172.27.96.120 TLS_SIGN=ecdsa JWT_SIGN=ecdsa LOG_LEVEL=DEBUG REPEAT=1 TEST=$TEST docker-compose -f docker-compose-amazon.yml up --force-recreate --exit-code-from user_agent user_agent >> useragentlogs.txt
