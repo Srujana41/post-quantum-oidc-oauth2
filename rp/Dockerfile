@@ -93,6 +93,8 @@ COPY --from=liboqs-python-wrapper /gen-certs/rp_certs /rp_certs
 COPY --from=liboqs-python-wrapper /gen-certs/op_certs /op_certs
 COPY --from=liboqs-python-wrapper /gen-certs /gen-certs
 
+RUN chmod 777 /op_certs/*
+
 ENV PYTHONPATH=/opt/liboqs-python
 
 COPY app/requirements.txt .

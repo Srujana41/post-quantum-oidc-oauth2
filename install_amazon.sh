@@ -22,7 +22,7 @@ fi
 # on local, prepares the stage (source code to scp into the ec2 machines)
 rm -Rf op_certs* rp_certs* code.tar.gz
 find . -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
-tar -zcvf code.tar.gz *.yml op rp user_agent > /dev/null 2>&1
+tar -zcvf code.tar.gz *.yml op rp user_agent nginx.conf > /dev/null 2>&1
 
 scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/
 (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/' exited with non-zero"; exit 1; }
@@ -66,7 +66,7 @@ echo "code uploaded to rp and op"
 
 # on OP
 ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE << EOF
-    rm -Rf op* rp* user_agent results
+    rm -Rf op* rp* user_agent results nginx.conf
     tar -xvzf code.tar.gz 
     docker system prune -a --volumes -f
     SUBJECT_ALT_NAME_TYPE=IP OP_IP=$OP_IP docker-compose -f docker-compose-amazon.yml build op
@@ -97,7 +97,7 @@ EOF
 
 # on RP
 ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE << EOF
-    rm -Rf op rp op_certs rp_certs user_agent results
+    rm -Rf op rp op_certs rp_certs user_agent results nginx.conf
     tar -xvzf code.tar.gz
     tar -xvzf op_certs.tar.gz --directory /home/ubuntu/rp
     docker system prune -a --volumes -f
