@@ -12,6 +12,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 sudo groupadd docker
 sudo usermod -aG docker ubuntu
 newgrp docker 
+sudo groupadd docker
+sudo usermod -aG docker $USER
 
 
 # run single server on op or rp with logs
