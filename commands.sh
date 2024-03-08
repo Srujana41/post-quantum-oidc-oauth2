@@ -7,7 +7,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/downloa\d/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 sudo groupadd docker
 sudo usermod -aG docker ubuntu
@@ -16,6 +16,8 @@ newgrp docker
 
 # run single server on op or rp with logs
 OP_IP=172.27.96.243 RP_IP=172.27.96.120 TLS_SIGN=ecdsa JWT_SIGN=ecdsa LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate op nginx >> log.txt
+OP_IP=172.27.96.243 RP_IP=172.27.96.120 TLS_SIGN=dilithium2 JWT_SIGN=dilithium2 LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate op nginx >> log.txt
+OP_IP=172.27.96.243 RP_IP=172.27.96.120 TLS_SIGN=dilithium2 JWT_SIGN=dilithium2 LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate rp >> log.txt
 
 
 # test ssl 
