@@ -11,9 +11,7 @@ sudo curl -L "https://github.com/docker/compose/releases/downloa\d/1.29.2/docker
 sudo chmod +x /usr/local/bin/docker-compose
 sudo groupadd docker
 sudo usermod -aG docker ubuntu
-newgrp docker 
-sudo groupadd docker
-sudo usermod -aG docker $USER
+newgrp docker
 
 
 # run single server on op or rp with logs
