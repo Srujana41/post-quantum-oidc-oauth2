@@ -6,7 +6,7 @@
 prefix="rp"
 op_prefix="op"
 serverIP="${RP_IP:-rp}"
-serverIPOP="172.27.96.243"
+serverIPOP="${OP_IP:-op}"
 subjectAltNameType="${SUBJECT_ALT_NAME_TYPE:-DNS}"
 WORKING_DIR="${prefix}_certs"
 OP_CERTS="op_certs"

@@ -58,6 +58,7 @@ services:
       context: rp
       args:
         RP_IP: $RP_IP
+        OP_IP: $OP_IP
         SUBJECT_ALT_NAME_TYPE: $SUBJECT_ALT_NAME_TYPE
     restart: always
     network_mode: "host"
