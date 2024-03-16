@@ -217,12 +217,12 @@ def get_app():
         # calculate the token size in op in function idp_pqc_token before return
         # note: only one function will work at a time, comment the other one.
     
-        with open('tokens.csv', mode='a', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            access_token_size = len(base64.b64decode(access_token.split(".")[2]))
-            refresh_token_size = len(base64.b64decode(refresh_token.split(".")[2]))
-            id_token_size = len(base64.b64decode(id_token.split(".")[2]))
-            csv_writer.writerow([sign_alg, str(access_token_size), str(refresh_token_size), str(id_token_size)])
+        # with open('tokens.csv', mode='a', newline='') as csv_file:
+        #     csv_writer = csv.writer(csv_file)
+        #     access_token_size = len(base64.b64decode(access_token.split(".")[2]))
+        #     refresh_token_size = len(base64.b64decode(refresh_token.split(".")[2]))
+        #     id_token_size = len(base64.b64decode(id_token.split(".")[2]))
+        #     csv_writer.writerow([sign_alg, str(access_token_size), str(refresh_token_size), str(id_token_size)])
                 
         return {
             "access_token": access_token,
@@ -240,13 +240,13 @@ def get_app():
     def idp_pqc_certs():
         
         # calucate the public_key size in op in function idp_pqc_token before return
-        with open('pk_size.csv', mode='a', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            if KEY_TYPE == "PQC":
-                jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key'))))
-            else:
-                jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key')).split("-\n")[1].split("\n-")[0]))
-            csv_writer.writerow([JWT_SIGN, str(jwk_size)])
+        # with open('pk_size.csv', mode='a', newline='') as csv_file:
+        #     csv_writer = csv.writer(csv_file)
+        #     if KEY_TYPE == "PQC":
+        #         jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key'))))
+        #     else:
+        #         jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key')).split("-\n")[1].split("\n-")[0]))
+        #     csv_writer.writerow([JWT_SIGN, str(jwk_size)])
 
         return {"keys": KEYJAR.dump_issuer_keys("")}
 

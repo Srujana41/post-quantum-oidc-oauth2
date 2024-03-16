@@ -30,7 +30,7 @@ scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/
 scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$RP_IP:~/
 (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$RP_IP:~/' exited with non-zero"; exit 1; }
 
-# rm code.tar.gz
+rm code.tar.gz
 
 # # on both OP and RP install docker and docker-compose
 # declare -a IPs=("$RP_IP" "$OP_IP")
@@ -91,6 +91,8 @@ ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE << EOF
     OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=rsa JWT_SIGN=rsa LOG_LEVEL=DEBUG docker-compose -f docker-compose-amazon.yml up -d op
 EOF
 
+echo "op done"
+
 # on RP
 ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE << EOF
     tar -xvzf code.tar.gz 
@@ -112,6 +114,8 @@ scp -i $AMAZON_PEM_FILE $AMAZON_USER@$RP_IP:~/rp_certs.tar.gz .
 (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE $AMAZON_USER@$RP_IP:~/rp_certs.tar.gz .' exited with non-zero"; exit 1; }
 
 tar -xvzf rp_certs.tar.gz 
+
+echo "rp done"
 
 docker stop $(docker ps -a -q)
 docker container rm $(docker container ls -a -q) && docker volume rm post_quantum_op_certs post_quantum_rp_certs
