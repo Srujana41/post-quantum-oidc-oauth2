@@ -138,11 +138,11 @@ EOF
 
 echo "complete setup done"
 
-# docker stop $(docker ps -a -q)
-# docker container rm $(docker container ls -a -q) && docker volume rm post_quantum_op_certs post_quantum_rp_certs
-# docker rmi $(docker images -a --filter=dangling=true -q)
-# docker-compose -f docker-compose-amazon.yml build user_agent user_agent-tcpdump
-# docker system prune -a --volumes -f
+docker stop $(docker ps -a -q)
+docker container rm $(docker container ls -a -q) && docker volume rm post_quantum_op_certs post_quantum_rp_certs
+docker rmi $(docker images -a --filter=dangling=true -q)
+docker-compose -f docker-compose-amazon.yml build user_agent user_agent-tcpdump
+docker system prune -a --volumes -f
 
 # echo "Testing if everything is working...."
 # OP_IP=$OP_IP RP_IP=$RP_IP LOG_LEVEL=DEBUG TLS_SIGN=rsa JWT_SIGN=rsa REPEAT=1 docker-compose -f docker-compose-amazon.yml up --exit-code-from user_agent user_agent user_agent-tcpdump

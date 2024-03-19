@@ -112,9 +112,9 @@ resumed_results="user_agent/app/logs/resumed_TEST=$TEST.csv"
 declare -A mean_results
 declare -A stdev_results
 
-declare -a TLS=("dilithium2")
-declare -a JWT=("dilithium2")
-declare -a TLS_PRETTY_NAMEs=("dilithium2")
+declare -a TLS=("ecdsa")
+declare -a JWT=("ecdsa")
+declare -a TLS_PRETTY_NAMEs=("ecdsa")
 # declare -a TLS=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
 # declare -a JWT=("rsa" "ecdsa" "dilithium2" "dilithium3" "dilithium5" "falcon512" "falcon1024" "sphincsshake256128fsimple" "sphincsshake256192fsimple" "sphincsshake256256fsimple")
 # declare -a TLS_PRETTY_NAMEs=("RSA" "ECDSA" "Dilithium 2" "Dilithium 3" "Dilithium 5" "Falcon-512" "Falcon-1024" "SPHINCS+-SHAKE256-128f-simple" "SPHINCS+-SHAKE256-192f-simple" "SPHINCS+-SHAKE256-256f-simple")
@@ -215,11 +215,20 @@ else
 fi
 
 for tls_index in "${!TLS[@]}"; do
-    tls=${TLS[$tls_index]} 
-    tls_ip="${tls}_${OP_IP}"
+    tls=${TLS[$tls_index]}
+    
     if [ "$OP_IP" != "op" ]; then
-        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/TLS_SIGN_OP_IP/'$tls_ip'/g' /home/ubuntu/nginx.conf
+    
+        # copying nginx to op
+        scp -i $AMAZON_PEM_FILE nginx.conf $AMAZON_USER@$OP_IP:~/
+        (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE nginx.conf $AMAZON_USER@$OP_IP:~/' exited with non-zero"; exit 1; }
+        
+        # replacing user agent ip, op ip and tls sign in op
+        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/TLS_SIGN/'$tls'/g' /home/ubuntu/nginx.conf
+        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/OP_IP/'$OP_IP'/g' /home/ubuntu/nginx.conf
         ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/USER_AGENT_IP/'$USER_AGENT_IP'/g' /home/ubuntu/nginx.conf
+
+        # start docker services in rp and op
         ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate -d $op_services" >> $RESULTS_FOLDER/log_OP 2>&1
         ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL docker-compose -f docker-compose-amazon.yml up --force-recreate -d rp" >> $RESULTS_FOLDER/log_RP 2>&1
     fi
@@ -249,8 +258,6 @@ for tls_index in "${!TLS[@]}"; do
         mean_results[$tls_index,$jwt_index]=`awk -v a="$mean_req_sec" 'BEGIN{printf("%.2f\n", a)}'`
         stdev_results[$tls_index,$jwt_index]=`awk -v a="$stdev_req_sec" 'BEGIN{printf("%.2f\n", a)}'`
     done
-    ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/'$tls_ip'/TLS_SIGN_OP_IP/g' /home/ubuntu/nginx.conf
-    ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE sed -i 's/'$USER_AGENT_IP'/USER_AGENT_IP/g' /home/ubuntu/nginx.conf
 done
 
 _term

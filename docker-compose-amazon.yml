@@ -23,8 +23,8 @@ services:
         source: ./op/app
         target: /app
       - $PWD/op_certs:/op_certs
-      
-  op-tcpdump:
+
+    op-tcpdump:
     image: nicolaka/netshoot
     command: nice -20 tcpdump -B 204800 -i any "tcp and (src ${RP_IP} or dst ${RP_IP} or src ${OP_IP} or dst ${OP_IP})" -w /data/$TLS_SIGN.pcap
     environment:
@@ -36,7 +36,7 @@ services:
       - $PWD/op/tcpdump:/data
     depends_on:
       - op
-  
+
   nginx:
     image: nginx:latest
     volumes:
@@ -113,6 +113,19 @@ services:
       - $PWD/user_agent/tcpdump:/data
     depends_on:
       - user_agent
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - $PWD/nginx.conf:/etc/nginx/nginx.conf
+      - $PWD/op_certs:/etc/nginx/op_certs
+      - $PWD/rp_certs:/etc/nginx/rp_certs
+    ports:
+      - "443:443"
+    depends_on:
+      - op
+    networks:
+      - shared_network
 
 networks:
   shared_network:

@@ -21,14 +21,12 @@ endcertExt="cert-confs/EndCert-extensions-x509.cnf"
 endcertExtOP="cert-confs/EndCert-extensions-x509.cnf"
 clientconf="cert-confs/openssl_client_auth.cnf"
 
-rootCADir="$WORKING_DIR/RootCA"
-intermediaryCAsDir="$WORKING_DIR/IntermediaryCAs"
-serverCerts="$WORKING_DIR/ServerCerts"
+rootCADir="$WORKING_DIR/RootCA/"
+intermediaryCAsDir="$WORKING_DIR/IntermediaryCAs/"
+serverCerts="$WORKING_DIR/ServerCerts/"
+serverCertsRoot="$WORKING_DIR/ServerCertsRoot"
 opServerCerts="$OP_CERTS/ServerCerts"
 opServerCertsRPOIDC="$OP_CERTS/ServerCertsRPOIDC"
-# opServerCertsOIDC="$OP_CERTS/ServerCertsOIDC"
-# opServerCertsOIDCRoot="$OP_CERTS/ServerCertsOIDCRoot"
-# opServerCertsOIDCIntermediate="$OP_CERTS/ServerCertsOIDCIntermediate"
 JWTKeys="$WORKING_DIR/JWTKeys/"
 
 #Certificate Algos
@@ -51,7 +49,6 @@ signatureSizes["sphincsshake256256fsimple"]=49856
 echo "-------------------------------------------------------------------------------------------------------------"
 echo "Generating Self-signed (root) CA certs:"
 mkdir -p $rootCADir
-# mkdir -p $opServerCertsOIDCRoot
 
 for algo in "${arrayalgos[@]}"; do
     echo "Generating for: $algo"
@@ -73,7 +70,6 @@ done
 echo "-------------------------------------------------------------------------------------------------------------"
 echo "Generating Intermediate CAs certs:"
 mkdir -p $intermediaryCAsDir
-# mkdir -p $opServerCertsOIDCIntermediate
 
 for algo in "${arrayalgos[@]}"; do
     echo "Generating for: $algo"
@@ -101,7 +97,7 @@ done
 echo "-------------------------------------------------------------------------------------------------------------"
 echo "Generating Server-certs (2-level chain): for /CN=$serverIP subjectAltName=$subjectAltNameType:$serverIP"
 mkdir -p $serverCerts
-# mkdir -p $opServerCertsOIDC
+mkdir -p $serverCertsRoot
 mkdir -p $opServerCertsRPOIDC
 
 for algo in "${arrayalgos[@]}"; do
@@ -144,53 +140,16 @@ for algo in "${arrayalgos[@]}"; do
     echo $altNameOP >> $endcertExtOP
     echo $SCTOP >> $endcertExtOP
 
-    # # Generate oidc key and csr
-
-    # echo "Generating certificated from op csr using rp "
-
-    # #Generating certificated from op csr using rp 
-    # $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCerts/${prefix}_${algo}_$serverIP.crt" -CAkey "$serverCerts/${prefix}_${algo}_$serverIP.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
-    
-    # $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -text
-
-    # #Create bundle for op csr using rp
-    # cat "$opServerCertsOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$serverCerts/bundlecerts_chain_${prefix}_${algo}_$serverIP.crt" > "$opServerCertsOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
-
-    # # Generate oidc key and csr
-
-    # echo "Generating certificate from op csr using rp intermediate "
-
-    # #Generating certificated from op csr using rp 
-    # $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDCIntermediate/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$intermediaryCAsDir/${prefix}_$algo.crt" -CAkey "$intermediaryCAsDir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
-    
-    # $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsOIDCIntermediate/${op_prefix}_${algo}_$serverIPOP.crt" -text
-
-    # #Create bundle for op csr using rp
-    # cat "$opServerCertsOIDCIntermediate/${op_prefix}_${algo}_$serverIPOP.crt" "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt" > "$opServerCertsOIDCIntermediate/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
-
-    # # Generate oidc key and csr
-    # echo "Generating certificate from op csr using rp Root "
-
-    # #Generating certificated from op csr using rp
-    # $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsOIDCRoot/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$rootCADir/${prefix}_$algo.crt" -CAkey "$rootCADir/${prefix}_$algo.key" -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
-    
-    # $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsOIDCRoot/${op_prefix}_${algo}_$serverIPOP.crt" -text
-
-    # #Create bundle for op csr using rp
-    # cat "$opServerCertsOIDCRoot/${op_prefix}_${algo}_$serverIPOP.crt" "$rootCADir/${prefix}_$algo.crt" > "$opServerCertsOIDCRoot/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
-
-
     # ********************* signing op using with generated rp self signed ******************************
 
-
     #Gen self-signed certificate
-    $OQS_OPENSSL_DIR/openssl req -x509 -new -key "$serverCerts/${prefix}_${algo}_$serverIP.key" -out "$serverCerts/root_${prefix}_$algo.crt" -nodes -subj "/CN=LABSEC oqstest CA" -extensions v3_ca -config $rootconf -days 1095
+    $OQS_OPENSSL_DIR/openssl req -x509 -new -key "$serverCerts/${prefix}_${algo}_$serverIP.key" -out "$serverCertsRoot/root_${prefix}_${algo}.crt" -nodes -subj "/CN=LABSEC oqstest CA" -extensions v3_ca -config $rootconf -days 1095
 
     #Generating certificated from op csr using rp
-    $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCerts/root_${prefix}_$algo.crt" -CAkey  "$serverCerts/${prefix}_${algo}_$serverIP.key"  -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
+    $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCertsRoot/root_${prefix}_${algo}.crt" -CAkey  "$serverCerts/${prefix}_${algo}_$serverIP.key"  -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
     
     $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -text
 
     #Create bundle for op csr using rp
-    cat "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$serverCerts/root_${prefix}_$algo.crt" > "$opServerCertsRPOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
+    cat "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$serverCertsRoot/root_${prefix}_$algo.crt" > "$opServerCertsRPOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
 done
