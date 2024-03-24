@@ -29,14 +29,15 @@ docker-compose -f docker-compose-amazon.yml up user_agent
 
 # on user agent
 requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f"/home/ubuntu/post-quantum-oidc-oauth2/rp_certs/ServerCerts/bundlecerts_chain_rp_ecdsa_172.27.96.182.crt")
-requests.get("https://172.27.96.53/.well-known/openid-configuration",  verify=f"/rp_certs/ServerCertsRoot/root_rp_dilithium3.crt")
+requests.get("https://172.27.96.53/.well-known/openid-configuration",  verify=f"/rp_certs/ServerCertsRoot/root_rp_rsa.crt")
 requests.get("https://172.27.96.53:8080/.well-known/openid-configuration",  verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_rsa.crt")
 
 
 requests.get("https://172.27.96.33", verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_rsa.crt")
 
-response = requests.get("https://172.27.93.53/auth", verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_rsa.crt", allow_redirects=False)
-
+response = requests.get("https://172.27.93.33/auth", verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_rsa.crt", allow_redirects=False)
+response = requests.get("https://172.27.93.33", verify=f"/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_rsa.crt")
+response = requests.get("https://172.27.93.33", verify=f"/home/ubuntu/post-quantum-oidc-oauth2/rp_certs/IntermediaryCAs/bundlecerts_chain_rp_rsa.crt")
 # on rp
 requests.get("https://172.27.96.243/.well-known/openid-configuration",  verify=f"/op_certs/IntermediaryCAs/bundlecerts_chain_op_ecdsa.crt")
 

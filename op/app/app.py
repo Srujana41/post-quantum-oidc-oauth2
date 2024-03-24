@@ -304,7 +304,7 @@ if __name__ == "__main__":
         sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
 
         sslContext.load_cert_chain(
-            certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+            certfile=f"/op_certs/ServerCertsRPOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
             keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
         )
 

@@ -22,7 +22,7 @@ fi
 # on local, prepares the stage (source code to scp into the ec2 machines)
 rm -Rf op_certs* rp_certs* code.tar.gz
 find . -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
-tar -zcvf code.tar.gz *.yml op rp user_agent > /dev/null 2>&1
+tar -zcvf code.tar.gz *.yml op op_clone rp user_agent > /dev/null 2>&1
 
 scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/
 (($? != 0)) && { echo "Command 'scp -i $AMAZON_PEM_FILE code.tar.gz $AMAZON_USER@$OP_IP:~/' exited with non-zero"; exit 1; }
