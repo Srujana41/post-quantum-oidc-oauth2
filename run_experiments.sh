@@ -199,10 +199,10 @@ fi
 rm -Rf op/tcpdump/*.pcap user_agent/tcpdump/*.pcap op/app/tls_debug/*.tls_debug user_agent/app/tls_debug/*.tls_debug
 
 if [ "$SAVE_TLS_DEBUG" = "True" ]; then
-    op_services="op op-tcpdump"
+    op_services="op op-tcpdump op_clone"
     local_services="user_agent user_agent-tcpdump"
 else
-    op_services="op"
+    op_services="op op_clone"
     local_services="user_agent"
 fi
 
@@ -210,7 +210,7 @@ for tls_index in "${!TLS[@]}"; do
     tls=${TLS[$tls_index]}
     
     if [ "$OP_IP" != "op" ]; then
-        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate -d $op_services" >> $RESULTS_FOLDER/log_OP 2>&1
+            ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate -d $op_services" >> $RESULTS_FOLDER/log_OP 2>&1
         ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL docker-compose -f docker-compose-amazon.yml up --force-recreate -d rp" >> $RESULTS_FOLDER/log_RP 2>&1
     fi
 

@@ -5,7 +5,6 @@ import sys
 import json
 import logging
 import secrets
-import csv, base64
 
 from oic.utils.time_util import utc_time_sans_frac
 from oic.utils.keyio import build_keyjar
@@ -63,7 +62,7 @@ def set_global_constants(tls_sign, jwt_sign):
         os.environ["TLS_DEFAULT_GROUPS"] = "kyber512"
 
     METHOD = "https" if TLS_SIGN else "http"
-    SERVER_ADDRESS = f"{METHOD}://{OP_IP}/"
+    SERVER_ADDRESS = f"{METHOD}://{OP_IP}:8080/"
 
     KEY_TYPE = "PQC" if JWT_SIGN not in ["rsa", "ecdsa"] else JWT_SIGN.upper()
 
@@ -214,16 +213,6 @@ def get_app():
 
         session_state = ""
 
-        # calculate the token size in op in function idp_pqc_token before return
-        # note: only one function will work at a time, comment the other one.
-    
-        # with open('tokens.csv', mode='a', newline='') as csv_file:
-        #     csv_writer = csv.writer(csv_file)
-        #     access_token_size = len(base64.b64decode(access_token.split(".")[2]))
-        #     refresh_token_size = len(base64.b64decode(refresh_token.split(".")[2]))
-        #     id_token_size = len(base64.b64decode(id_token.split(".")[2]))
-        #     csv_writer.writerow([sign_alg, str(access_token_size), str(refresh_token_size), str(id_token_size)])
-                
         return {
             "access_token": access_token,
             "expires_in": 3656500,
@@ -238,16 +227,6 @@ def get_app():
 
     @app.route("/protocol/openid-connect/certs", methods=["GET"])
     def idp_pqc_certs():
-        
-        # calucate the public_key size in op in function idp_pqc_token before return
-        # with open('pk_size.csv', mode='a', newline='') as csv_file:
-        #     csv_writer = csv.writer(csv_file)
-        #     if KEY_TYPE == "PQC":
-        #         jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key'))))
-        #     else:
-        #         jwk_size = len(base64.b64decode(str(KEYJAR.dump_issuer_keys("")[0].get('key')).split("-\n")[1].split("\n-")[0]))
-        #     csv_writer.writerow([JWT_SIGN, str(jwk_size)])
-
         return {"keys": KEYJAR.dump_issuer_keys("")}
 
     @app.route("/protocol/openid-connect/userinfo", methods=["POST"])
@@ -304,7 +283,7 @@ if __name__ == "__main__":
         sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
 
         sslContext.load_cert_chain(
-            certfile=f"/op_certs/ServerCertsRPOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+            certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
             keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
         )
 
@@ -313,4 +292,4 @@ if __name__ == "__main__":
     else:
         sslContext = None
 
-    run_simple("0.0.0.0",443 , AppReloader(get_app), ssl_context=sslContext)
+    run_simple("0.0.0.0", 8080, AppReloader(get_app), ssl_context=sslContext)

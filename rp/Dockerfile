@@ -57,6 +57,7 @@ RUN apk add automake autoconf && cd /opt/openssl && LDFLAGS="-Wl,-rpath -Wl,/usr
 RUN apk add bash
 
 COPY gen-certs /gen-certs
+COPY op_certs /gen-certs/op_certs
 WORKDIR /gen-certs
 
 RUN chmod +x gen-certs.sh
@@ -66,6 +67,9 @@ ENV SUBJECT_ALT_NAME_TYPE=$SUBJECT_ALT_NAME_TYPE
 
 ARG RP_IP
 ENV RP_IP=$RP_IP
+
+ARG OP_IP
+ENV OP_IP=$OP_IP
 
 RUN ./gen-certs.sh
 
@@ -86,6 +90,8 @@ RUN apk update && apk upgrade && apk add gcc libc-dev libffi-dev python3-dev ope
 COPY --from=liboqs-python-wrapper /usr/local /usr/local
 COPY --from=liboqs-python-wrapper /opt/liboqs-python /opt/liboqs-python
 COPY --from=liboqs-python-wrapper /gen-certs/rp_certs /rp_certs
+COPY --from=liboqs-python-wrapper /gen-certs/op_certs /op_certs
+COPY --from=liboqs-python-wrapper /gen-certs /gen-certs
 
 ENV PYTHONPATH=/opt/liboqs-python
 

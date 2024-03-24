@@ -4,9 +4,12 @@
 
 #Conf Files
 prefix="rp"
+op_prefix="op"
 serverIP="${RP_IP:-rp}"
+serverIPOP="${OP_IP:-op}"
 subjectAltNameType="${SUBJECT_ALT_NAME_TYPE:-DNS}"
 WORKING_DIR="${prefix}_certs"
+OP_CERTS="op_certs"
 OQS_OPENSSL_DIR="/usr/local/bin/"
 export OPENSSL_CONF=/etc/ssl/openssl.cnf
 
@@ -15,11 +18,15 @@ intermediateconf="cert-confs/openssl_intermediate.cnf"
 intermediateExt="cert-confs/IntCA-extensions-x509.cnf"
 serverconf="cert-confs/openssl_server.cnf"
 endcertExt="cert-confs/EndCert-extensions-x509.cnf"
+endcertExtOP="cert-confs/EndCert-extensions-x509.cnf"
 clientconf="cert-confs/openssl_client_auth.cnf"
 
 rootCADir="$WORKING_DIR/RootCA/"
 intermediaryCAsDir="$WORKING_DIR/IntermediaryCAs/"
 serverCerts="$WORKING_DIR/ServerCerts/"
+serverCertsRoot="$WORKING_DIR/ServerCertsRoot"
+opServerCerts="$OP_CERTS/ServerCerts"
+opServerCertsRPOIDC="$OP_CERTS/ServerCertsRPOIDC"
 JWTKeys="$WORKING_DIR/JWTKeys/"
 
 #Certificate Algos
@@ -90,6 +97,8 @@ done
 echo "-------------------------------------------------------------------------------------------------------------"
 echo "Generating Server-certs (2-level chain): for /CN=$serverIP subjectAltName=$subjectAltNameType:$serverIP"
 mkdir -p $serverCerts
+mkdir -p $serverCertsRoot
+mkdir -p $opServerCertsRPOIDC
 
 for algo in "${arrayalgos[@]}"; do
     echo "Generating for: $algo"
@@ -121,4 +130,26 @@ for algo in "${arrayalgos[@]}"; do
     
     #Create bundle
     cat "$serverCerts/${prefix}_${algo}_$serverIP.crt" "$intermediaryCAsDir/bundlecerts_chain_${prefix}_$algo.crt" > "$serverCerts/bundlecerts_chain_${prefix}_${algo}_$serverIP.crt"
+       
+    # -------------------------------------*********** op **********---------------------------------------------
+
+    SCTOP="1.3.6.1.4.1.11129.2.4.2=ASN1:OCTETSTRING:$($OQS_OPENSSL_DIR/openssl rand -hex ${signatureSizes[$algo]})"
+    altNameOP="subjectAltName = $subjectAltNameType:$serverIPOP"
+
+    #add our new SCT
+    echo $altNameOP >> $endcertExtOP
+    echo $SCTOP >> $endcertExtOP
+
+    # ********************* signing op using with generated rp self signed ******************************
+
+    #Gen self-signed certificate
+    $OQS_OPENSSL_DIR/openssl req -x509 -new -key "$serverCerts/${prefix}_${algo}_$serverIP.key" -out "$serverCertsRoot/root_${prefix}_${algo}.crt" -nodes -subj "/CN=LABSEC oqstest CA" -extensions v3_ca -config $rootconf -days 1095
+
+    #Generating certificated from op csr using rp
+    $OQS_OPENSSL_DIR/openssl x509 -req -in "$opServerCerts/${op_prefix}_${algo}_$serverIPOP.csr" -out "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -CA "$serverCertsRoot/root_${prefix}_${algo}.crt" -CAkey  "$serverCerts/${prefix}_${algo}_$serverIP.key"  -CAcreateserial -days 1095 -extensions server_cert -extfile "$endcertExtOP"
+    
+    $OQS_OPENSSL_DIR/openssl x509 -in "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" -text
+
+    #Create bundle for op csr using rp
+    cat "$opServerCertsRPOIDC/${op_prefix}_${algo}_$serverIPOP.crt" "$serverCertsRoot/root_${prefix}_$algo.crt" > "$opServerCertsRPOIDC/bundlecerts_chain_${op_prefix}_${algo}_$serverIPOP.crt"
 done

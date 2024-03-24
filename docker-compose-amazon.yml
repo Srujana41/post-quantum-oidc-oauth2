@@ -23,7 +23,25 @@ services:
         source: ./op/app
         target: /app
       - $PWD/op_certs:/op_certs
-      
+
+  op_clone:
+    image: ubuntu_op
+    network_mode: "host"
+    init: true
+    environment:
+      TLS_SIGN: $TLS_SIGN
+      JWT_SIGN: $JWT_SIGN
+      OP_IP: $OP_IP
+      RP_IP: $RP_IP
+      LOG_LEVEL: $LOG_LEVEL #NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL, default to CRITICAL
+      SAVE_TLS_DEBUG: $SAVE_TLS_DEBUG
+      TIMEOUT: $TIMEOUT
+    volumes:
+      - type: bind
+        source: ./op_clone/app
+        target: /app
+      - $PWD/op_certs:/op_certs  
+    
   op-tcpdump:
     image: nicolaka/netshoot
     command: nice -20 tcpdump -B 204800 -i any "tcp and (src ${RP_IP} or dst ${RP_IP} or src ${OP_IP} or dst ${OP_IP})" -w /data/$TLS_SIGN.pcap
@@ -42,6 +60,7 @@ services:
       context: rp
       args:
         RP_IP: $RP_IP
+        OP_IP: $OP_IP
         SUBJECT_ALT_NAME_TYPE: $SUBJECT_ALT_NAME_TYPE
     restart: always
     network_mode: "host"
@@ -59,7 +78,7 @@ services:
         source: ./rp/app
         target: /app
       - $PWD/rp_certs:/rp_certs
-      - $PWD/op_certs:/op_certs:ro
+      - $PWD/op_certs:/op_certs
       
   user_agent:
     build: user_agent
@@ -96,3 +115,19 @@ services:
       - $PWD/user_agent/tcpdump:/data
     depends_on:
       - user_agent
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - $PWD/nginx.conf:/etc/nginx/nginx.conf
+      - $PWD/op_certs:/etc/nginx/op_certs
+      - $PWD/rp_certs:/etc/nginx/rp_certs
+    ports:
+      - "443:443"
+    depends_on:
+      - op
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
