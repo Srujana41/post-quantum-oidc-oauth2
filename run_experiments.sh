@@ -19,9 +19,9 @@ then
     exit
 fi
 
-if ! command -v docker-compose &> /dev/null
+if ! command -v docker compose &> /dev/null
 then
-    echo "docker-compose could not be found, please install"
+    echo "docker compose could not be found, please install"
     exit
 fi
 
@@ -199,10 +199,10 @@ fi
 rm -Rf op/tcpdump/*.pcap user_agent/tcpdump/*.pcap op/app/tls_debug/*.tls_debug user_agent/app/tls_debug/*.tls_debug
 
 if [ "$SAVE_TLS_DEBUG" = "True" ]; then
-    op_services="op op-tcpdump"
+    op_services="op op_clone op-tcpdump"
     local_services="user_agent user_agent-tcpdump"
 else
-    op_services="op"
+    op_services="op op_clone"
     local_services="user_agent"
 fi
 
@@ -210,8 +210,8 @@ for tls_index in "${!TLS[@]}"; do
     tls=${TLS[$tls_index]}
     
     if [ "$OP_IP" != "op" ]; then
-        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG docker-compose -f docker-compose-amazon.yml up --force-recreate -d $op_services" >> $RESULTS_FOLDER/log_OP 2>&1
-        ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL docker-compose -f docker-compose-amazon.yml up --force-recreate -d rp" >> $RESULTS_FOLDER/log_RP 2>&1
+        ssh $AMAZON_USER@$OP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG docker compose -f docker-compose-amazon.yml up --force-recreate -d $op_services" >> $RESULTS_FOLDER/log_OP 2>&1
+        ssh $AMAZON_USER@$RP_IP -i $AMAZON_PEM_FILE "docker container stop $(docker container ls -a -q) || docker container rm $(docker container ls -a -q) || docker volume rm post_quantum_op_certs post_quantum_rp_certs || docker rmi $(docker images -a --filter=dangling=true -q) || TIMEOUT=$TIMEOUT OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$tls LOG_LEVEL=$LOG_LEVEL docker compose -f docker-compose-amazon.yml up --force-recreate -d rp" >> $RESULTS_FOLDER/log_RP 2>&1
     fi
 
     for jwt_index in "${!JWT[@]}"; do
@@ -225,9 +225,9 @@ for tls_index in "${!TLS[@]}"; do
         SECONDS=0
         
         if [ "$OP_IP" = "op" ]; then
-            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker-compose up --force-recreate --exit-code-from user_agent $local_services op rp op-tcpdump >> $RESULTS_FOLDER/log_user_agent 2>&1
+            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker compose up --force-recreate --exit-code-from user_agent $local_services op rp op-tcpdump >> $RESULTS_FOLDER/log_user_agent 2>&1
         else
-            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker-compose -f docker-compose-amazon.yml up --force-recreate --exit-code-from user_agent $local_services >> $RESULTS_FOLDER/log_user_agent 2>&1
+            TIMEOUT=$TIMEOUT LOG_LEVEL=$LOG_LEVEL OP_IP=$OP_IP RP_IP=$RP_IP TLS_SIGN=$tls JWT_SIGN=$jwt REPEAT=$REPEAT SAVE_TLS_DEBUG=$SAVE_TLS_DEBUG TEST=$TEST docker compose -f docker-compose-amazon.yml up --force-recreate --exit-code-from user_agent $local_services >> $RESULTS_FOLDER/log_user_agent 2>&1
         fi
         
         IFS=, read -r a b c d e f g mean_req_sec stdev_req_sec extra < <(tail -n1 $resumed_results)

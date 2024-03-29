@@ -62,7 +62,7 @@ def set_global_constants(tls_sign, jwt_sign):
         os.environ["TLS_DEFAULT_GROUPS"] = "kyber512"
 
     METHOD = "https" if TLS_SIGN else "http"
-    SERVER_ADDRESS = f"{METHOD}://{OP_IP}/"
+    SERVER_ADDRESS = f"{METHOD}://{OP_IP}:8080/"
 
     KEY_TYPE = "PQC" if JWT_SIGN not in ["rsa", "ecdsa"] else JWT_SIGN.upper()
 
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         sslContext.minimum_version = ssl.TLSVersion.TLSv1_3
 
         sslContext.load_cert_chain(
-            certfile=f"/op_certs/ServerCertsRPOIDC/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
+            certfile=f"/op_certs/ServerCerts/bundlecerts_chain_op_{TLS_SIGN}_{OP_IP}.crt",
             keyfile=f"/op_certs/ServerCerts/op_{TLS_SIGN}_{OP_IP}.key",
         )
 
@@ -292,4 +292,4 @@ if __name__ == "__main__":
     else:
         sslContext = None
 
-    run_simple("0.0.0.0",443 , AppReloader(get_app), ssl_context=sslContext)
+    run_simple("0.0.0.0", 8080, AppReloader(get_app), ssl_context=sslContext)
