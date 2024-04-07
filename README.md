@@ -144,7 +144,81 @@ We created a script to automate a large portion of the emphirical evaluation. Yo
 > **Warning** <a name = "warning" id= "warning"></a>: 
 `tcpdump`s grow quickly. E.g. if you run `REPEAT=50 ./run_experiments.sh` you will get around 5GB of pcap files.
 
-how to debug container steps
+### Remote
+To run the application on cloud, follow the below steps:
+1. Create three servers from the cloud of your choice. If you are using **iitk cloud (baadal.iitk.ac.in)**, use the below steps to create servers from baadal as follows:
+      - First create a security group using the following steps:
+           * Log in into your baadal cloud account, https://baadal.cse.iitk.ac.in/dashboard/auth/login/?next=/dashboard/. Go to Network and then go to Security Groups tab. You will see a dashboard with **Create Security Group** button.
+           * Next you will see a pop up to create a security group. Enter the name of the security group and submit the form. You will see a new entry with the created security group.
+           * Now click on **Manage Rules** button for the created security group. Now you will see a new dashboard to create a new rules. Click on **Add Rule** button to add the following rules.
+             
+       ___________________________________________________________________________________________________________________
+       | Direction  | Ether Type|IP Protocol |Port Range     |    Remote IP Prefix  |  Remote Security Group |Description|
+       |____________|___________|____________|_______________|______________________|________________________|___________|
+       |  Egress    |  IPv4	  |   Any	   |       Any	   |     0.0.0.0/0	   |        -       |      -	      |
+       |  Egress	|  IPv4	  |     ICMP	   |    Any	    |    0.0.0.0/0	   |         -	      |      -	   |
+       |  Egress	|    IPv4	|     TCP	   |    Any	        |        0.0.0.0/0	   |          -	              |      -	   |
+       |  Egress	|    IPv6	|     Any	   |    Any	        |        ::/0	       |          -	              |      -	   |
+       |  Ingress   |	IPv4	|     ICMP	   |    Any	        |        0.0.0.0/0	   |          -	              |      -     |
+       |  Ingress   |	IPv4	|     TCP	   |    22 (SSH)	|        0.0.0.0/0	   |          -	              |      -	   |
+       |  Ingress   |    IPv4	|     TCP	   |    443 (HTTPS) |	    0.0.0.0/0	   |          -	              |      -	   |
+       |  Ingress   |    IPv4	|     TCP	   |    8080	    |        0.0.0.0/0     |          -               |      -     |
+       |____________|___________|______________|________________|______________________|__________________________|____________|
+
+    - To create server, follows the below steps:
+       * Go to Compute and then go to  Instances tab. You will see a dashboard with **Launch Instance** button.
+       * Next you will see a new pop window. Under Details, enter Instance Name (Example: RP, OP, USER_AGENT).
+       * Under Source select *Ubuntu-22 server*. Next Under Flavor, select *2Core_RAM4GB_Storage100GB*, the under Secuirty Groups, select the security group you created in the above step.
+       * Under Key Pair, click on Create Key Pair button. Now in the new pop up window, enter the key pair name and select the type as **SSH key**. Now select the created key pair. Also store this key pair in the local(i.e. computer/laptop) to use it later to connect to server.
+       * Finally, click on **Launch Instance** button to create server.
+2. Next the follow the below steps to connect to these three servers.
+   * Open the VS code and install Remote Development extension from Extensions tab. Follow the step from this blog at https://code.visualstudio.com/docs/remote/ssh, to connect to the servers.
+   * Once you connect to all the three servers, create a file named auth.py in all thre three servers. This file provides internet connection to you servers. Do this step only if you are using iitk cloud. Now run auth.py on thr three servers using the below command
+     ```
+     python3 auth.py
+     ``` 
+   * Now install docker on the three servers using the following commands:
+     ```
+        sudo apt-get update
+        sudo apt-get remove docker docker-engine docker.io containerd runc
+        sudo apt-get install -y ca-certificates curl gnupg lsb-release
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+        sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        sudo groupadd docker
+        sudo usermod -aG docker ubuntu
+        newgrp docker
+     ```
+   * Check if the docker is installed properly using the below command:
+     ```
+        docker
+     ```
+   *  Now clone the github repository using the following steps:
+     ```
+         git clone https://github.com/Srujana41/post-quantum-oidc-oauth2.git
+         cd post-quantum-oidc-oauth2
+         git submodule init
+         git submodule update
+         sudo apt-get install wireshark-common
+         sudo apt-get install gnuplot
+         sudo apt install traceroute
+     ```
+   * Now install the certificates using the below command:
+     ```
+         OP_IP=54.209.156.87 RP_IP=54.87.166.113 AMAZON_PEM_FILE=~/<your pem file>.pem ./install_amazon.sh
+     ```
+   * Next to run the experiment to generate the results use the below command:
+     ```
+         OP_IP=54.209.156.87 RP_IP=54.87.166.113 AMAZON_PEM_FILE=~/<your pem file>.pem REPEAT=50 ./run_experiments.sh
+     ```
+   
+> **Warning** <a name = "warning" id= "warning"></a>:
+- `AMAZON_PEM_FILE`: env variable pointing to the localtion of the .pem file downloaded from Amazon EC2 to SSH into the machines;
+- write about docker issue
+- 
 
 ## Tips
 
